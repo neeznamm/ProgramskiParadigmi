@@ -78,6 +78,7 @@
 )
 
 (defn process-element
+  "Ова се чекорите 1 и 2 од барањето споени во едно т.е. условно се применуваат, зависно од тоа дали елементот е едночлено множество или множество што содржи уникатен елемент (таков што не се појавува во истата колона, редица или подматрица). Ако елементот не исполнува ниту еден од условите, матрицата не се менува."
   [matrix i j]
   (if (singleton-set? (get-in matrix [i j]))
     ;; Ако елементот е множество со еден број, бриши го тој број од множествата на елементите во иста редица, колона и подматрица
@@ -93,35 +94,50 @@
   )
 )
 
-(defn apply-transformation
+(defn process-all-elements
+ "Едно поминување на елементите на матрицата со process-element"
   [matrix]
-  (vec (for [i (range (count matrix))]
-         (vec (for [j (range (count (first matrix)))]
-                (process-element matrix i j)))))
+  (loop [matrix matrix
+         i 0
+         j 0]
+    (if (< i (count matrix))
+      (if (< j (count (first matrix)))
+        (let [new-matrix (process-element matrix i j)]
+          (recur new-matrix i (inc j)))
+        (recur matrix (inc i) 0))
+      matrix))
 )
 
-(defn solve-sudoku
+(defn converged?
+ "Еден од условите за конвергенција: ако нема промени во матрицата меѓу две итерации"
+  [matrix]
+  (= matrix (process-all-elements matrix))
+)
+
+(defn solve
+  "Се изминуваат сите елементи на матрицата толку пати колку што е потребно т.е. додека сите елементи не се едночлени множества или доколку нема промени меѓу две итреации"
   [sudoku]
   (loop [matrix (transform sudoku)
          iterations 0
-         max-iterations 5]
-    (if (< iterations max-iterations)
-      (recur (apply-transformation matrix) (inc iterations) max-iterations)
+         max-iterations 1000]
+    (if (and (<= iterations max-iterations) (or (not (converged? matrix))
+                   (not (every? singleton-set? (flatten matrix)))))
+      (recur (process-all-elements matrix) (inc iterations) max-iterations)
       matrix
     )
-   )
+  )
 )
 
 (def example-sudoku
-  [[0 2 5 0 0 1 0 0 0]
-   [1 0 4 2 5 0 0 0 0]
-   [0 0 6 0 0 4 2 1 0]
-   [0 5 0 0 0 0 3 2 0]
-   [6 0 0 0 2 0 0 0 9]
-   [0 8 7 0 0 0 0 6 0]
-   [0 9 1 5 0 0 6 0 0]
-   [0 0 0 0 7 8 1 0 3]
-   [0 0 0 6 0 0 5 9 0]]
+  [[0 0 0 1 0 2 0 0 0]
+   [3 0 4 0 0 5 0 0 0]
+   [0 0 0 0 0 0 6 0 7]
+   [0 1 0 0 0 0 3 5 0]
+   [6 0 0 0 0 0 0 0 8]
+   [0 9 5 0 0 0 0 4 0]
+   [8 0 2 0 0 0 0 0 0]
+   [0 0 0 7 0 0 1 0 9]
+   [0 0 0 3 0 4 0 0 0]]
 )
 
 
@@ -141,13 +157,13 @@
 
 
 (defn draw-matrix
+  "Функција што го врши цртањето"
   [matrix]
   (q/background 255)
   (let [rows (count matrix)
         cols (count (first matrix))
         cell-width (/ 600 cols)
         cell-height (/ 600 rows)]
-    ;; Draw Sudoku grid lines
     (q/stroke 0)
     (doseq [i (range 1 rows)]
       (let [y (* i cell-height)]
@@ -157,10 +173,9 @@
       (let [x (* j cell-width)]
         (q/stroke-weight (if (= (mod j 3) 0) 3 1))
         (q/line x 0 x 600)))
-    ;; Draw numbers
     (q/stroke-weight 1)
     (q/fill 0)
-    (q/text-size 20) ;; Set the font size
+    (q/text-size 20)
        (doseq [i (range rows)
             j (range cols)]
       (let [value (get-in matrix [i j])
@@ -171,23 +186,11 @@
         (q/text-align :center :center)
         (q/text (str value) (+ x (/ cell-width 2)) (+ y (/ cell-height 2)))))))
 
-(defn -main1 []
+(defn -main []
   (let [example-matrix
-        (matrix-sets-to-ints (transform example-sudoku))]
+        (matrix-sets-to-ints (solve example-sudoku))]
     (q/defsketch example
       :draw (fn [] (draw-matrix example-matrix))
       :features [:keep-on-top]
       :size [600 600]))
 )
-
-(defn -main2 []
-  (let [example-matrix
-        (matrix-sets-to-ints (apply-transformation (transform example-sudoku) 7 7 4))]
-    (q/defsketch example
-      :draw (fn [] (draw-matrix example-matrix))
-      :features [:keep-on-top]
-      :size [600 600]))
-)
-
-(-main1)
-(-main2)
