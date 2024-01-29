@@ -41,15 +41,20 @@
 )
 
 (defn transform
-  "Враќа матрица каде елементот со индекс (i,j) во судокуто е заменет со множество од можни вредности за таа позиција. Ова е малку изменета верзија од описот во задачата, со тоа што нулите ги заменува не со множеството броеви од 1 до 9, туку со множество на можните вредности, имајќи ги предвид веќе пополнетите ќелии."
+  "Враќа матрица каде елементот со индекс (i,j) во судокуто е заменет со множество од можни вредности за таа позиција."
   [sudoku]
   (let [rows (count sudoku)
         cols (count (first sudoku))]
     (vec (for [i (range rows)]
            (vec (for [j (range cols)]
                   (if (zero? (get-in sudoku [i j]))
-                   (find-diff #{1 2 3 4 5 6 7 8 9} sudoku i j)
-                    #{(get-in sudoku [i j])}))))))
+                   #{1 2 3 4 5 6 7 8 9}
+                   #{(get-in sudoku [i j])})                 
+                 )
+           )
+         )
+    )
+  )
 )
 
 (defn singleton-set?
@@ -89,10 +94,7 @@
           col-set (apply clojure.set/union (assoc (get-column matrix j) i nil))
           submatrix-set (apply clojure.set/union (assoc (vec (apply concat (submatrix-for-element matrix i j))) (+ (* 3 (mod i 3)) (mod j 3)) nil))
           diff (clojure.set/difference current-set (clojure.set/union row-set col-set submatrix-set))]
-      (if (empty? diff) matrix (assoc-in matrix [i j] (into #{} (list (first diff)))))
-    )
-  )
-)
+      (if (empty? diff) matrix (assoc-in matrix [i j] (into #{} (list (first diff))))))))
 
 (defn process-all-elements
  "Едно поминување на елементите на матрицата со process-element"
@@ -129,16 +131,16 @@
 )
 
 (def example-sudoku
-  [[0 0 0 1 0 2 0 0 0]
-   [3 0 4 0 0 5 0 0 0]
-   [0 0 0 0 0 0 6 0 7]
-   [0 1 0 0 0 0 3 5 0]
-   [6 0 0 0 0 0 0 0 8]
-   [0 9 5 0 0 0 0 4 0]
-   [8 0 2 0 0 0 0 0 0]
-   [0 0 0 7 0 0 1 0 9]
-   [0 0 0 3 0 4 0 0 0]]
-)
+  [[1 0 2 3 0 4 0 0 0]
+   [0 5 0 0 1 0 6 0 0]
+   [0 7 0 0 0 5 0 0 8]
+   [0 6 0 4 2 0 0 5 0]
+   [3 0 9 0 0 0 2 0 7]
+   [0 1 0 0 8 3 0 9 0]
+   [4 0 0 6 0 0 0 3 0]
+   [0 0 6 0 4 0 0 2 0]
+   [0 0 0 9 0 1 7 0 4]]
+  )
 
 
 (defn set-to-int
