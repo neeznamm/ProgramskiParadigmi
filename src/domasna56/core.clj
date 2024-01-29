@@ -122,8 +122,7 @@
   (loop [matrix (transform sudoku)
          iterations 0
          max-iterations 1000]
-    (if (and (<= iterations max-iterations) (or (not (converged? matrix))
-                   (not (every? singleton-set? (flatten matrix)))))
+    (if (and (<= iterations max-iterations) (not (converged? matrix)) (not (every? singleton-set? (flatten matrix))))
       (recur (process-all-elements matrix) (inc iterations) max-iterations)
       matrix
     )
